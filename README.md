@@ -111,7 +111,7 @@ To deploy the Medics software, ensure the necessary dependencies are installed a
 - [ ] Implement cloud storage for data
 
 ## 12. License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+This project is licensed. See the [LICENSE](LICENSE) file for more details.
 
 ## 13. Contact
 For any inquiries, please contact:
