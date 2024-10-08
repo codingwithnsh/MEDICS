@@ -260,3 +260,5 @@ To ensure smooth operation, the following error handling mechanisms are implemen
 - **Invalid Login**: If a patient or doctor enters incorrect login credentials, the system will prompt an error message.
 - **Empty Diagnosis**: The system will not allow a patient to submit an empty diagnosis field.
 - **Excel File Access**: If the Excel files are inaccessible or corrupted, the system will prompt the user to restore the files. 
+
+
