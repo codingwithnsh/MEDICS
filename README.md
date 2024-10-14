@@ -45,12 +45,7 @@ https://github.com/codingwithnsh/MEDICS.git
 ```
 
 ### 4.2 Install Dependencies
-Navigate into the project directory and install the required Python packages:
-```bash
-cd medics
-pip install -r requirements.txt
-```
-Alternatively, you can manually install dependencies:
+You might need to install the following dependencies:
 ```bash
 pip install pandas openpyxl
 ```
