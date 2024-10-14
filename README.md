@@ -41,7 +41,7 @@ Follow these steps to install and run the Medics software on your local machine.
 ### 4.1 Clone the Repository
 First, clone the repository to your local machine using the following command:
 ```bash
-git clone https://github.com/username/medics.git
+https://github.com/codingwithnsh/MEDICS.git
 ```
 
 ### 4.2 Install Dependencies
