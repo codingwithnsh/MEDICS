@@ -110,7 +110,7 @@ This project is licensed. See the [LICENSE](LICENSE.md) file for more details.
 
 ## 13. Contact
 For any inquiries, please contact:
-- Email: your_email@example.com
+- Email: thecodingjourney20@gmail.com
 
 ## 14. Contribution Guide
 We welcome contributions to the **Medics** project! If you’d like to contribute, please follow these steps:
@@ -118,7 +118,7 @@ We welcome contributions to the **Medics** project! If you’d like to contribut
 1. **Fork the Repository**: Click on the "Fork" button on the top right of the repository page.
 2. **Clone Your Fork**: Use the following command to clone your forked repository to your local machine:
    ```bash
-   git clone https://github.com/your-username/medics.git
+   https://github.com/codingwithnsh/MEDICS.git
    ```
 3. **Create a Branch**: Create a new branch for your feature or bug fix:
    ```bash
