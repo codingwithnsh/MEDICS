@@ -70,9 +70,9 @@ python main.py
 Follow the prompts to log in or register as a patient or doctor. Patients can submit their diagnoses and schedule appointments, while doctors can view patient information.
 
 ## 6. Screenshots
-![Login Screen](screenshots/login.png)
-![Patient Dashboard](screenshots/patient_dashboard.png)
-![Doctor Dashboard](screenshots/doctor_dashboard.png)
+![Login Screen](Images/login%20screen.png)
+![Patient Dashboard](Images/patient%20dashboard.png)
+![Doctor Dashboard](Images/doctor%20dashboard.png)
 
 ## 7. API Reference
 ### Authentication API
