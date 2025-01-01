@@ -169,11 +169,11 @@ def show_patient_dashboard():
     img_label.image = img  # Keep a reference to avoid garbage collection
     img_label.pack(pady=10)
 
-    ttk.Label(frame, text='Enter Diagnoses (comma-separated):').pack(pady=5)
+    ttk.Label(frame, text='Enter Symptoms (comma-separated):').pack(pady=5)
     diagnosis_entry = ttk.Entry(frame)
     diagnosis_entry.pack(pady=5)
 
-    submit_btn = ttk.Button(frame, text='Submit Diagnosis', command=lambda: submit_diagnosis(diagnosis_entry))
+    submit_btn = ttk.Button(frame, text='Submit Symptoms', command=lambda: submit_diagnosis(diagnosis_entry))
     submit_btn.pack(pady=10, anchor='s')  # Anchor the button to the bottom
 
     results_frame = ttk.Frame(frame)
