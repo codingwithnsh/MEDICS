@@ -10,23 +10,14 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Load Excel database
 disease_df = pd.read_excel(os.path.join(script_dir, 'diseases.xlsx'), sheet_name='Disease')
-patient_df = pd.read_excel(os.path.join(script_dir, 'database.xlsx'), sheet_name='patients')
-doctor_df = pd.read_excel(os.path.join(script_dir, 'database.xlsx'), sheet_name='doctors')
+users_df = pd.read_excel(os.path.join(script_dir, 'database.xlsx'), sheet_name='users')
 
 # Ensure proper column types
-patient_df['Diagnosis'] = patient_df['Diagnosis'].astype(str)
-if 'Appointment Slot' not in patient_df.columns:
-    patient_df['Appointment Slot'] = ''
-if 'Preferred Doctor' not in patient_df.columns:
-    patient_df['Preferred Doctor'] = ''
-
-# Ensure 'Name' column exists in doctor_df
-if 'Name' not in doctor_df.columns:
-    doctor_df['Name'] = doctor_df['Username']  # or another appropriate default value
-
-# Ensure 'Specialization' column exists in doctor_df
-if 'Specialization' not in doctor_df.columns:
-    doctor_df['Specialization'] = ''  # or another appropriate default value
+users_df['Diagnosis'] = users_df['Diagnosis'].astype(str)
+if 'Appointment Slot' not in users_df.columns:
+    users_df['Appointment Slot'] = ''
+if 'Preferred Doctor' not in users_df.columns:
+    users_df['Preferred Doctor'] = ''
 
 # Main root window
 root = tk.Tk()
@@ -77,12 +68,7 @@ def show_login():
     password_entry = ttk.Entry(frame, show='*')
     password_entry.pack(pady=5)
 
-    ttk.Label(frame, text='User Type').pack(pady=5)
-    user_type_var = tk.StringVar(value='Patient')
-    ttk.Radiobutton(frame, text='Patient', variable=user_type_var, value='Patient').pack(pady=5)
-    ttk.Radiobutton(frame, text='Doctor', variable=user_type_var, value='Doctor').pack(pady=5)
-
-    login_btn = ttk.Button(frame, text='Login', command=lambda: authenticate_user(username_entry, password_entry, user_type_var))
+    login_btn = ttk.Button(frame, text='Login', command=lambda: authenticate_user(username_entry, password_entry))
     login_btn.pack(pady=10)
 
     signup_btn = ttk.Button(frame, text='Sign Up', command=lambda: show_view('signup'))
@@ -104,16 +90,7 @@ def show_signup():
     password_entry = ttk.Entry(frame, show='*')
     password_entry.pack(pady=5)
 
-    ttk.Label(frame, text='User Type').pack(pady=5)
-    user_type_var = tk.StringVar(value='Patient')
-    ttk.Radiobutton(frame, text='Patient', variable=user_type_var, value='Patient').pack(pady=5)
-    ttk.Radiobutton(frame, text='Doctor', variable=user_type_var, value='Doctor').pack(pady=5)
-
-    specialization_label = ttk.Label(frame, text='Specialization')
-    specialization_entry = ttk.Entry(frame)
-
-    city_label = ttk.Label(frame, text='City')
-    city_label.pack(pady=5)
+    ttk.Label(frame, text='City').pack(pady=5)
     city_entry = ttk.Entry(frame)
     city_entry.pack(pady=5)
 
@@ -121,82 +98,68 @@ def show_signup():
     address_entry = ttk.Entry(frame)
     address_entry.pack(pady=5)
 
-    def update_specialization_field(*args):
-        if user_type_var.get() == 'Doctor':
-            specialization_label.pack(pady=5, before=city_label)
-            specialization_entry.pack(pady=5, before=city_label)
-        else:
-            specialization_label.pack_forget()
-            specialization_entry.pack_forget()
+    ttk.Label(frame, text='Specialization (if Doctor)').pack(pady=5)
+    specialization_entry = ttk.Entry(frame)
+    specialization_entry.pack(pady=5)
 
-    user_type_var.trace('w', update_specialization_field)
-
-    signup_btn = ttk.Button(frame, text='Sign Up', command=lambda: register_user(name_entry, username_entry, password_entry, user_type_var, city_entry, address_entry, specialization_entry))
+    signup_btn = ttk.Button(frame, text='Sign Up', command=lambda: register_user(name_entry, username_entry, password_entry, city_entry, address_entry, specialization_entry))
     signup_btn.pack(pady=10)
 
     login_btn = ttk.Button(frame, text='Back to Login', command=lambda: show_view('login'))
     login_btn.pack(pady=10)
 
-def register_user(name_entry, username_entry, password_entry, user_type_var, city_entry, address_entry, specialization_entry):
-    global patient_df
-    global doctor_df
+def register_user(name_entry, username_entry, password_entry, city_entry, address_entry, specialization_entry):
+    global users_df
 
     name = name_entry.get()
     username = username_entry.get()
     password = password_entry.get()
-    user_type = user_type_var.get()
     city = city_entry.get()
     address = address_entry.get()
+    user_type = 'Doctor' if specialization_entry.get() else 'Patient'
     specialization = specialization_entry.get() if user_type == 'Doctor' else ''
 
     if not name or not username or not password or not city or not address or (user_type == 'Doctor' and not specialization):
         messagebox.showerror('Error', 'All fields are required.')
         return
 
-    if user_type == 'Patient':
-        if username in patient_df['Username'].values:
-            messagebox.showerror('Error', 'Username already exists.')
-            return
-        new_user = pd.DataFrame([[name, username, password, '', '', city, address]], columns=['Name', 'Username', 'Password', 'Diagnosis', 'Appointment Slot', 'City', 'Address'])
-        patient_df = pd.concat([patient_df, new_user], ignore_index=True)
-    elif user_type == 'Doctor':
-        if username in doctor_df['Username'].values:
-            messagebox.showerror('Error', 'Username already exists.')
-            return
-        new_user = pd.DataFrame([[name, username, password, '', city, address, specialization]], columns=['Name', 'Username', 'Password', 'Assigned Patients', 'City', 'Address', 'Specialization'])
-        doctor_df = pd.concat([doctor_df, new_user], ignore_index=True)
+    if username in users_df['Username'].values:
+        messagebox.showerror('Error', 'Username already exists.')
+        return
+
+    new_user = pd.DataFrame([[name, username, password, address, city, '', '', '', user_type, specialization, '', '']],
+                            columns=['Name', 'Username', 'Password', 'Address', 'City', 'Diagnosis', 'Appointment Slot', 'Preferred Doctor', 'User Type', 'Specialization', 'Assigned Patients', 'Doctor ID'])
+    users_df = pd.concat([users_df, new_user], ignore_index=True)
 
     save_data()
     messagebox.showinfo('Success', 'User registered successfully.')
     show_view('login')
 
-def authenticate_user(username_entry, password_entry, user_type_var):
+def authenticate_user(username_entry, password_entry):
     global current_user
     current_user = None  # Reset current_user on each login attempt
 
     username = username_entry.get()
     password = password_entry.get()
-    user_type = user_type_var.get()
 
-    if user_type == 'Patient':
-        user = patient_df[(patient_df['Username'] == username) & (patient_df['Password'] == password)]
-        if not user.empty:
-            current_user = username
+    user = users_df[(users_df['Username'] == username) & (users_df['Password'] == password)]
+    if not user.empty:
+        current_user = username
+        user_type = user['User Type'].values[0]
+        if user_type == 'Patient':
             show_view('patient')
-        else:
-            messagebox.showerror('Error', 'Invalid username or password.')
-    elif user_type == 'Doctor':
-        doctor = doctor_df[(doctor_df['Username'] == username) & (doctor_df['Password'] == password)]
-        if not doctor.empty:
-            current_user = username
+        elif user_type == 'Doctor':
             show_view('doctor')
-        else:
-            messagebox.showerror('Error', 'Invalid username or password.')
+    else:
+        messagebox.showerror('Error', 'Invalid username or password.')
 
 def show_patient_dashboard():
     global results_frame
     frame = ttk.Frame(root, padding="20")
     frame.pack(fill='both', expand=True)
+    ttk.Label(frame, text=f'Welcome, {current_user}').pack(pady=10)
+    patient_info = users_df[users_df['Username'] == current_user].iloc[0]
+    ttk.Label(frame, text=f'Name: {patient_info["Name"]}').pack(pady=5)
 
     # Load and display image
     img = Image.open(os.path.join(script_dir, 'patient_dashboard_image.png'))
@@ -215,6 +178,7 @@ def show_patient_dashboard():
 
     results_frame = ttk.Frame(frame)
     results_frame.pack(pady=10, fill='both', expand=True)
+
 def submit_diagnosis(diagnosis_entry):
     symptoms = [s.strip().lower() for s in diagnosis_entry.get().split(',')]
     disease_df['Symptoms'] = disease_df['Symptoms'].str.strip().str.lower()
@@ -227,9 +191,6 @@ def submit_diagnosis(diagnosis_entry):
 
     update_table(results)
     save_patient_data()
-
-import tkinter as tk
-from tkinter import ttk
 
 def update_table(results):
     global results_frame
@@ -267,25 +228,33 @@ def show_confirm_button(event, tree):
             confirm_btn.destroy()
         confirm_btn = ttk.Button(results_frame, text='Confirm Selection', command=lambda: confirm_selection(tree))
         confirm_btn.pack(pady=10, side='right', anchor='n')  # Ensure the button is anchored to the top right
+
 def confirm_selection(tree):
-    global patient_df
     selected_item = tree.selection()
     if selected_item:
         selected_disease = tree.item(selected_item[0], 'values')[0]
-        patient_df.loc[patient_df['Username'] == current_user, 'Diagnosis'] = selected_disease
-        save_patient_data()
+        users_df.loc[users_df['Username'] == current_user, 'Diagnosis'] = selected_disease
+        save_data()
         messagebox.showinfo('Success', f'Diagnosis "{selected_disease}" has been added to your record.')
         show_view('select_doctor')
 
 def save_patient_data():
     try:
         with pd.ExcelWriter(os.path.join(script_dir, 'database.xlsx'), engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-            patient_df.to_excel(writer, sheet_name='patients', index=False)
+            users_df.to_excel(writer, sheet_name='users', index=False)
     except FileNotFoundError:
         messagebox.showerror('Error', 'Database file not found. Please check the file path.')
     except Exception as e:
         messagebox.showerror('Error', f'An error occurred: {e}')
 
+def save_data():
+    try:
+        with pd.ExcelWriter(os.path.join(script_dir, 'database.xlsx'), engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+            users_df.to_excel(writer, sheet_name='users', index=False)
+    except FileNotFoundError:
+        messagebox.showerror('Error', 'Database file not found. Please check the file path.')
+    except Exception as e:
+        messagebox.showerror('Error', f'An error occurred: {e}')
 
 def show_select_doctor():
     frame = ttk.Frame(root, padding="20")
@@ -294,7 +263,7 @@ def show_select_doctor():
     ttk.Label(frame, text='Select Preferred Doctor:').pack(pady=10)
 
     # Get the city of the current patient
-    patient_city = patient_df.loc[patient_df['Username'] == current_user, 'City'].values[0]
+    patient_city = users_df.loc[users_df['Username'] == current_user, 'City'].values[0]
 
     columns = ('Name', 'Specialization', 'Address')
     tree = ttk.Treeview(frame, columns=columns, show='headings')
@@ -303,7 +272,7 @@ def show_select_doctor():
         tree.column(col, width=200, anchor='w')
 
     # Filter doctors based on the patient's city
-    for _, row in doctor_df[doctor_df['City'] == patient_city].iterrows():
+    for _, row in users_df[(users_df['City'] == patient_city) & (users_df['User Type'] == 'Doctor')].iterrows():
         name = row['Name']
         specialization = textwrap.fill(str(row['Specialization']), width=30)
         address = textwrap.fill(str(row['Address']), width=30)
@@ -335,9 +304,6 @@ def show_select_doctor():
     schedule_btn.pack(pady=10)
 
 def schedule_appointment(tree, slot_var):
-    global patient_df
-    global doctor_df
-
     selected_item = tree.selection()
     if not selected_item:
         messagebox.showerror('Error', 'Please select a doctor.')
@@ -347,14 +313,14 @@ def schedule_appointment(tree, slot_var):
     selected_slot = slot_var.get()
 
     # Check if the selected doctor exists in the DataFrame
-    doctor_row = doctor_df.loc[doctor_df['Name'] == selected_doctor]
+    doctor_row = users_df[(users_df['Name'] == selected_doctor) & (users_df['User Type'] == 'Doctor')]
     if doctor_row.empty:
         messagebox.showerror('Error', 'Selected doctor not found.')
         return
 
     doctor_id = doctor_row['Username'].values[0]
-    patient_df.loc[patient_df['Username'] == current_user, 'Appointment Slot'] = str(selected_slot)
-    patient_df.loc[patient_df['Username'] == current_user, 'Preferred Doctor'] = doctor_id
+    users_df.loc[users_df['Username'] == current_user, 'Appointment Slot'] = str(selected_slot)
+    users_df.loc[users_df['Username'] == current_user, 'Preferred Doctor'] = doctor_id
 
     assigned_patients = doctor_row['Assigned Patients'].values[0]
     if pd.isnull(assigned_patients):
@@ -363,7 +329,7 @@ def schedule_appointment(tree, slot_var):
         assigned_patients = assigned_patients.split(', ')
 
     assigned_patients.append(current_user)
-    doctor_df.loc[doctor_df['Username'] == doctor_id, 'Assigned Patients'] = ', '.join(assigned_patients)
+    users_df.loc[users_df['Username'] == doctor_id, 'Assigned Patients'] = ', '.join(assigned_patients)
 
     save_data()
     messagebox.showinfo('Appointment', f'Appointment scheduled with Dr. {selected_doctor} at {selected_slot}')
@@ -374,6 +340,7 @@ def schedule_appointment(tree, slot_var):
 
     # Redirect to login view
     show_view('login')
+
 def show_doctor_dashboard():
     global action_frame
     frame = ttk.Frame(root, padding="20")
@@ -390,7 +357,7 @@ def show_doctor_dashboard():
     back_btn.pack(pady=10)
 
 def load_patient_data(username, frame):
-    doc_info = doctor_df[doctor_df['Username'] == username]
+    doc_info = users_df[(users_df['Username'] == username) & (users_df['User Type'] == 'Doctor')]
     if doc_info.empty:
         messagebox.showerror('Error', 'No doctor data found for the username.')
         return
@@ -413,7 +380,7 @@ def load_patient_data(username, frame):
         tree.column(col, width=150)
 
     for patient in assigned_patients:
-        patient_data = patient_df[patient_df['Username'] == patient]
+        patient_data = users_df[users_df['Username'] == patient]
         if not patient_data.empty:
             tree.insert('', 'end', values=(patient_data['Name'].values[0], patient_data['Diagnosis'].values[0], patient_data['Appointment Slot'].values[0], patient_data['Preferred Doctor'].values[0]))
 
@@ -430,7 +397,7 @@ def show_action_buttons(event, tree, username, assigned_patients):
     selected_item = tree.selection()
     if selected_item:
         patient_name = tree.item(selected_item[0], 'values')[0]
-        patient_username = patient_df[patient_df['Name'] == patient_name]['Username'].values[0]
+        patient_username = users_df[users_df['Name'] == patient_name]['Username'].values[0]
 
         # Remove existing buttons if any
         for widget in action_frame.winfo_children():
@@ -443,13 +410,10 @@ def show_action_buttons(event, tree, username, assigned_patients):
         btn_progress.pack(pady=5)
 
 def mark_done(patient_username, username, assigned_patients):
-    global patient_df
-    global doctor_df
-
     if patient_username in assigned_patients:
         assigned_patients.remove(patient_username)
-        doctor_df.loc[doctor_df['Username'] == username, 'Assigned Patients'] = ', '.join(assigned_patients)
-        patient_df.loc[patient_df['Username'] == patient_username, 'Preferred Doctor'] = ''
+        users_df.loc[users_df['Username'] == username, 'Assigned Patients'] = ', '.join(assigned_patients)
+        users_df.loc[users_df['Username'] == patient_username, 'Preferred Doctor'] = ''
         save_data()
         show_view('doctor')
     else:
@@ -458,20 +422,10 @@ def mark_done(patient_username, username, assigned_patients):
 def mark_in_progress(patient_username, assigned_patients):
     next_patient = assigned_patients[0] if assigned_patients else None
     if next_patient:
-        next_patient_name = patient_df[patient_df['Username'] == next_patient]['Name'].values[0]
+        next_patient_name = users_df[users_df['Username'] == next_patient]['Name'].values[0]
         messagebox.showinfo('Next Patient', f'Next patient: {next_patient_name}')
     else:
         messagebox.showinfo('Next Patient', 'No more patients in the schedule.')
-
-def save_data():
-    try:
-        with pd.ExcelWriter(os.path.join(script_dir, 'database.xlsx'), engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-            patient_df.to_excel(writer, sheet_name='patients', index=False)
-            doctor_df.to_excel(writer, sheet_name='doctors', index=False)
-    except FileNotFoundError:
-        messagebox.showerror('Error', 'Database file not found. Please check the file path.')
-    except Exception as e:
-        messagebox.showerror('Error', f'An error occurred: {e}')
 
 # Show login view initially
 show_view('login')
