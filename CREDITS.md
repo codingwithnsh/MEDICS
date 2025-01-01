@@ -8,9 +8,9 @@ This project was brought to life with the dedication and effort of:
   > _Managed every aspect of the project, ensuring its successful completion._
 
 ### 🙌 Support Team
-- **[Sharan Pai]**
+- **Sharan Pai**
 - _Design_ 
-- **[Swekrath]**
+- **Swekrath**
 - _Design_
  
 
