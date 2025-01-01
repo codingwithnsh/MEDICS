@@ -3,12 +3,12 @@
 This project was brought to life with the dedication and effort of:
 
 ### 👨‍💻 Core Contributor
-- **[Naman Shettigar](https://github.com/your-profile)**  
+- **[Naman Shettigar](https://github.com/codingwithnsh)**  
   _Project Lead, Development, Design, and Implementation_  
   > _Managed every aspect of the project, ensuring its successful completion._
 
 ### 🙌 Support Team
-- **[Sharan Pai**
+- **[Sharan Pai]**
 - _Design_ 
 - **[Swekrath]**
 - _Design_
