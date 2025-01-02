@@ -9,11 +9,10 @@ import textwrap
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Load Excel database
-disease_df = pd.read_excel(os.path.join(script_dir, 'diseases.xlsx'), sheet_name='Disease')
 users_df = pd.read_excel(os.path.join(script_dir, 'database.xlsx'), sheet_name='users')
 
 # Ensure proper column types
-users_df['Diagnosis'] = users_df['Diagnosis'].astype(str)
+users_df['Symptoms'] = users_df['Symptoms'].astype(str)
 if 'Appointment Slot' not in users_df.columns:
     users_df['Appointment Slot'] = ''
 if 'Preferred Doctor' not in users_df.columns:
@@ -157,9 +156,6 @@ def show_patient_dashboard():
     global results_frame
     frame = ttk.Frame(root, padding="20")
     frame.pack(fill='both', expand=True)
-    ttk.Label(frame, text=f'Welcome, {current_user}').pack(pady=10)
-    patient_info = users_df[users_df['Username'] == current_user].iloc[0]
-    ttk.Label(frame, text=f'Name: {patient_info["Name"]}').pack(pady=5)
 
     # Load and display image
     img = Image.open(os.path.join(script_dir, 'patient_dashboard_image.png'))
@@ -180,65 +176,13 @@ def show_patient_dashboard():
     results_frame.pack(pady=10, fill='both', expand=True)
 
 def submit_diagnosis(diagnosis_entry):
-    symptoms = [s.strip().lower() for s in diagnosis_entry.get().split(',')]
-    disease_df['Symptoms'] = disease_df['Symptoms'].str.strip().str.lower()
+    symptoms = diagnosis_entry.get().strip().lower()
+    users_df.loc[users_df['Username'] == current_user, 'Symptoms'] = symptoms
+    save_data()
+    messagebox.showinfo('Success', 'Symptoms have been added to your record.')
+    show_view('select_doctor')
 
-    results = []
-    for symptom in symptoms:
-        result = disease_df[disease_df['Symptoms'].str.contains(symptom, case=False, na=False)]
-        if not result.empty:
-            results.append(result)
-
-    update_table(results)
-    save_patient_data()
-
-def update_table(results):
-    global results_frame
-    global confirm_btn
-    for widget in results_frame.winfo_children():
-        widget.destroy()
-
-    columns = ('Disease', 'Symptoms', 'Severity', 'Initial Treatment')
-    tree = ttk.Treeview(results_frame, columns=columns, show='headings')
-    for col in columns:
-        tree.heading(col, text=col)
-        tree.column(col, width=150)
-    for result in results:
-        for _, row in result.iterrows():
-            tree.insert('', 'end', values=(row['Disease'], row['Symptoms'], row['Severity'], row['Initial Treatment']))
-    tree.pack(side='left', fill='both', expand=True)
-
-    scrollbar = ttk.Scrollbar(results_frame, orient='vertical', command=tree.yview)
-    scrollbar.pack(side='right', fill='y')
-    tree.configure(yscrollcommand=scrollbar.set)
-
-    # Create and display the Confirm Selection button
-    if confirm_btn:
-        confirm_btn.destroy()
-    confirm_btn = ttk.Button(results_frame, text='Confirm Selection', command=lambda: confirm_selection(tree))
-    confirm_btn.pack(pady=10, side='right', anchor='n')  # Ensure the button is anchored to the top right
-
-    tree.bind('<<TreeviewSelect>>', lambda event: show_confirm_button(event, tree))
-
-def show_confirm_button(event, tree):
-    global confirm_btn
-    selected_item = tree.selection()
-    if selected_item:
-        if confirm_btn:
-            confirm_btn.destroy()
-        confirm_btn = ttk.Button(results_frame, text='Confirm Selection', command=lambda: confirm_selection(tree))
-        confirm_btn.pack(pady=10, side='right', anchor='n')  # Ensure the button is anchored to the top right
-
-def confirm_selection(tree):
-    selected_item = tree.selection()
-    if selected_item:
-        selected_disease = tree.item(selected_item[0], 'values')[0]
-        users_df.loc[users_df['Username'] == current_user, 'Diagnosis'] = selected_disease
-        save_data()
-        messagebox.showinfo('Success', f'Diagnosis "{selected_disease}" has been added to your record.')
-        show_view('select_doctor')
-
-def save_patient_data():
+def save_data():
     try:
         with pd.ExcelWriter(os.path.join(script_dir, 'database.xlsx'), engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
             users_df.to_excel(writer, sheet_name='users', index=False)
@@ -247,7 +191,7 @@ def save_patient_data():
     except Exception as e:
         messagebox.showerror('Error', f'An error occurred: {e}')
 
-def save_data():
+def save_patient_data():
     try:
         with pd.ExcelWriter(os.path.join(script_dir, 'database.xlsx'), engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
             users_df.to_excel(writer, sheet_name='users', index=False)
@@ -269,13 +213,13 @@ def show_select_doctor():
     tree = ttk.Treeview(frame, columns=columns, show='headings')
     for col in columns:
         tree.heading(col, text=col, anchor='w')
-        tree.column(col, width=200, anchor='w')
+        tree.column(col, width=300, anchor='w')
 
     # Filter doctors based on the patient's city
     for _, row in users_df[(users_df['City'] == patient_city) & (users_df['User Type'] == 'Doctor')].iterrows():
         name = row['Name']
-        specialization = textwrap.fill(str(row['Specialization']), width=30)
-        address = textwrap.fill(str(row['Address']), width=30)
+        specialization = textwrap.fill(str(row['Specialization']), width=90)
+        address = textwrap.fill(str(row['Address']), width=50)
         tree.insert('', 'end', values=(name, specialization, address))
 
     tree.pack(side='left', fill='both', expand=True)
@@ -373,7 +317,7 @@ def load_patient_data(username, frame):
         ttk.Label(frame, text='No assigned patients found.').pack(pady=10)
         return
 
-    columns = ('Name', 'Diagnosis', 'Appointment Slot', 'Preferred Doctor ID')
+    columns = ('Name', 'Symptoms', 'Appointment Slot', 'Preferred Doctor ID')
     tree = ttk.Treeview(frame, columns=columns, show='headings')
     for col in columns:
         tree.heading(col, text=col)
@@ -382,7 +326,7 @@ def load_patient_data(username, frame):
     for patient in assigned_patients:
         patient_data = users_df[users_df['Username'] == patient]
         if not patient_data.empty:
-            tree.insert('', 'end', values=(patient_data['Name'].values[0], patient_data['Diagnosis'].values[0], patient_data['Appointment Slot'].values[0], patient_data['Preferred Doctor'].values[0]))
+            tree.insert('', 'end', values=(patient_data['Name'].values[0], patient_data['Symptoms'].values[0], patient_data['Appointment Slot'].values[0], patient_data['Preferred Doctor'].values[0]))
 
     tree.pack(side='left', fill='both', expand=True)
 
